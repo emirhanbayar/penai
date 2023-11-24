@@ -60,7 +60,10 @@ if __name__ == "__main__":
             print("Completed ", abs(global_end - (time.time() - start_time)), " seconds late !!!!!")
 
         for i, segment in enumerate(segments):
-            json_dict[global_start + segment.start] = {"speaker": speaker_labels[i], "text": text["segments"][i%len(text["segments"])]["text"]}
+            try:
+                json_dict[global_start + segment.start] = {"speaker": speaker_labels[i], "text": text["segments"][i%len(text["segments"])]["text"]}
+            except:
+                json_dict[global_start + segment.start] = {"speaker": speaker_labels[i], "text": ""}
             print()
             print(f"\t Speaker {speaker_labels[i]}: {round(global_start + segment.start,3)} - {round(global_start + segment.end,3)}", end="\t \t")
             print(f"\t Text: ", end="")
