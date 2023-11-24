@@ -6,11 +6,7 @@ import argparse
 from transcription.whisper_transcriber import WhisperSpeechTranscriber
 from transcription.model_config import ModelSize
 import time
-
-import torch
-torch.cuda.empty_cache()
-
-import json
+import os
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -18,8 +14,8 @@ def parse_args():
     parser.add_argument("--chunk-size", type=int, default=32000)
     parser.add_argument("--feature-clustering-threshold", type=float, default=0.8)
     parser.add_argument("--from-previous-session", type=str, default=None)
-    parser.add_argument("--device", type=str, default="cpu")
-    parser.add_argument("--save-diar-result", action="store_true")
+    parser.add_argument("--save-rttm", type=str, default=None)
+    parser.add_argument("--device", type=str, default="gpu")
 
 
     return parser.parse_args()
@@ -29,6 +25,9 @@ if __name__ == "__main__":
     # initialize audio iterator
     args = parse_args()
     audio_iterator = AudioIterator(args.audio_path, args.chunk_size)
+    if args.save_rttm:
+        os.makedirs("output", exist_ok=True)
+        f = open(os.path.join("output", args.save_rttm), "w")
 
     # initialize diarizer
     diarizer = PyannoteDiarizer(device=args.device,
@@ -37,10 +36,8 @@ if __name__ == "__main__":
 
 
     # initialize speech transcriber
-    transcriber=WhisperSpeechTranscriber(ModelSize.LARGE_V2)
+    transcriber=WhisperSpeechTranscriber(ModelSize.TINY)
     # iterate over audio
-    json_dict = {}
-    start_time = time.time()
     start_time = time.time()
     while True:
         chunk, global_start, global_end = audio_iterator.next(simulate_real_time=True)
@@ -59,11 +56,11 @@ if __name__ == "__main__":
         else:
             print("Completed ", abs(global_end - (time.time() - start_time)), " seconds late !!!!!")
 
+        i = 0
         for i, segment in enumerate(segments):
-            try:
-                json_dict[global_start + segment.start] = {"speaker": speaker_labels[i], "text": text["segments"][i%len(text["segments"])]["text"]}
-            except:
-                json_dict[global_start + segment.start] = {"speaker": speaker_labels[i], "text": ""}
+            if args.save_rttm:
+                print(f"SPEAKER {args.audio_path} 1 {round(global_start + segment.start,3)} {round(segment.end - segment.start,3)} <NA> <NA> {speaker_labels[i]} <NA> <NA>", file=f)
+                f.write(f"SPEAKER {args.audio_path} 1 {round(global_start + segment.start,3)} {round(segment.end - segment.start,3)} <NA> <NA> {speaker_labels[i]} <NA> <NA>\n")
             print()
             print(f"\t Speaker {speaker_labels[i]}: {round(global_start + segment.start,3)} - {round(global_start + segment.end,3)}", end="\t \t")
             print(f"\t Text: ", end="")
@@ -76,7 +73,7 @@ if __name__ == "__main__":
             for j in range(i + 1, len(segments)):
                 print(text["segments"][j%len(text["segments"])]["text"], end="")
 
-    with open("result.json", "w") as f:
-        json.dump(json_dict, f)
+    if args.save_rttm:
+        f.close()
 
     print()
