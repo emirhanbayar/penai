@@ -37,5 +37,5 @@ if __name__ == "__main__":
     if args.run_scratch:
         for i in range(len(audio_files)):
             print(f"Processing {audio_files[i]}")
-            os.system(f"python main.py --audio-path {audio_files[i]} --chunk-size {args.chunk_size} --feature-clustering-threshold {args.feature_clustering_threshold} --device {args.device} --save-rttm {os.path.basename(audio_files[i]).replace('.wav', '.rttm')}")
+            os.system(f"python main.py --audio-path {audio_files[i]} --chunk-size {args.chunk_size} --feature-clustering-threshold {args.feature_clustering_threshold} --device {args.device} --save-rttm {os.path.basename(audio_files[i]).replace('.flac', '.rttm')}")
         
