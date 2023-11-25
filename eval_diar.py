@@ -22,7 +22,7 @@ def parse_args():
     return parser.parse_args()
 
 def load_data(audio_data_path, rttm_data_path):
-    audio_files = [os.path.join(audio_data_path, f) for f in os.listdir(audio_data_path) if f.endswith(".wav")]
+    audio_files = [os.path.join(audio_data_path, f) for f in os.listdir(audio_data_path) if f.endswith(".flac")]
     rttm_files = [os.path.join(rttm_data_path, f) for f in os.listdir(rttm_data_path) if f.endswith(".rttm")]
     audio_files.sort()
     rttm_files.sort()
