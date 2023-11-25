@@ -25,9 +25,9 @@ if __name__ == "__main__":
     # initialize audio iterator
     args = parse_args()
     audio_iterator = AudioIterator(args.audio_path, args.chunk_size)
-    if args.save_rttm:
-        os.makedirs("output", exist_ok=True)
-        f = open(os.path.join("output", args.save_rttm), "w")
+
+    os.makedirs("output", exist_ok=True)
+    f = open(os.path.join("output", args.save_rttm), "w")
 
     # initialize diarizer
     diarizer = PyannoteDiarizer(device=args.device,
@@ -58,9 +58,9 @@ if __name__ == "__main__":
 
         i = 0
         for i, segment in enumerate(segments):
-            if args.save_rttm:
-                print(f"SPEAKER {args.audio_path} 1 {round(global_start + segment.start,3)} {round(segment.end - segment.start,3)} <NA> <NA> {speaker_labels[i]} <NA> <NA>", file=f)
-                f.write(f"SPEAKER {args.audio_path} 1 {round(global_start + segment.start,3)} {round(segment.end - segment.start,3)} <NA> <NA> {speaker_labels[i]} <NA> <NA>\n")
+        
+            # print(f"SPEAKER {args.audio_path} 1 {round(global_start + segment.start,3)} {round(segment.end - segment.start,3)} <NA> <NA> {speaker_labels[i]} <NA> <NA>", file=f)
+            f.write(f"SPEAKER {args.audio_path} 1 {round(global_start + segment.start,3)} {round(segment.end - segment.start,3)} <NA> <NA> {speaker_labels[i]} <NA> <NA>\n")
             print()
             print(f"\t Speaker {speaker_labels[i]}: {round(global_start + segment.start,3)} - {round(global_start + segment.end,3)}", end="\t \t")
             print(f"\t Text: ", end="")
@@ -73,7 +73,7 @@ if __name__ == "__main__":
             for j in range(i + 1, len(segments)):
                 print(text["segments"][j%len(text["segments"])]["text"], end="")
 
-    if args.save_rttm:
-        f.close()
+    
+    f.close()
 
     print()
