@@ -12,7 +12,7 @@ def download_dataset(dataset_name, dataset_type, dataset_size):
     else:
         raise NotImplementedError(f"Dataset {dataset_name} not implemented")
     
-    os.makedirs("data", exist_ok=True)
+    os.makedirs(f"data/{dataset_name}", exist_ok=True)
     os.system(f"tar -xvf {filename} -C data/{dataset_name}")
     os.system(f"rm {filename}")
 
