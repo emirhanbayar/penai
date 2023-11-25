@@ -46,7 +46,7 @@ class PyannoteDiarizer():
 
         self.features = {}
 
-        self.feature_labels = [chr(i) for i in range(ord('A'), ord('Z') + 1)]
+        self.feature_labels = range(1000)
 
         self.feature_clustering_threshold = feature_clustering_threshold
 
