@@ -1,3 +1,4 @@
+from typing import Any
 import numpy as np
 import torch
 from pyannote.audio import Pipeline
@@ -46,9 +47,20 @@ class PyannoteDiarizer():
 
         self.features = {}
 
-        self.feature_labels = range(1000)
+        self.feature_labels = range(10000)
 
         self.feature_clustering_threshold = feature_clustering_threshold
+
+    def __call__(self, kwargs: Any):
+        """
+        :param kwargs: dictionary with waveform and sample rate
+        :return: Annotation object with speaker labels and segments
+
+        Diarize the chunk and feature match the speakers with the previous chunks
+        Determine if the speaker was already seen or not in the previous chunks
+        """
+
+        return self.run(kwargs["waveform"])
 
     def run(self, chunk: np.ndarray):
         """

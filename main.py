@@ -6,7 +6,6 @@ import argparse
 from transcription.whisper_transcriber import WhisperSpeechTranscriber
 from transcription.model_config import ModelSize
 import time
-import os
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -14,7 +13,6 @@ def parse_args():
     parser.add_argument("--chunk-size", type=int, default=32000)
     parser.add_argument("--feature-clustering-threshold", type=float, default=0.8)
     parser.add_argument("--from-previous-session", type=str, default=None)
-    parser.add_argument("--save-rttm", type=str, default=None)
     parser.add_argument("--device", type=str, default="gpu")
 
 
@@ -26,9 +24,6 @@ if __name__ == "__main__":
     args = parse_args()
     audio_iterator = AudioIterator(args.audio_path, args.chunk_size)
 
-    os.makedirs("output", exist_ok=True)
-    f = open(os.path.join("output", args.save_rttm), "w")
-
     # initialize diarizer
     diarizer = PyannoteDiarizer(device=args.device,
                                 feature_clustering_threshold=args.feature_clustering_threshold,
@@ -38,6 +33,7 @@ if __name__ == "__main__":
     # initialize speech transcriber
     transcriber=WhisperSpeechTranscriber(ModelSize.TINY)
     # iterate over audio
+    start_time = time.time()
     start_time = time.time()
     while True:
         chunk, global_start, global_end = audio_iterator.next(simulate_real_time=True)
@@ -56,11 +52,7 @@ if __name__ == "__main__":
         else:
             print("Completed ", abs(global_end - (time.time() - start_time)), " seconds late !!!!!")
 
-        i = 0
         for i, segment in enumerate(segments):
-        
-            # print(f"SPEAKER {args.audio_path} 1 {round(global_start + segment.start,3)} {round(segment.end - segment.start,3)} <NA> <NA> {speaker_labels[i]} <NA> <NA>", file=f)
-            f.write(f"SPEAKER {args.audio_path} 1 {round(global_start + segment.start,3)} {round(segment.end - segment.start,3)} <NA> <NA> {speaker_labels[i]} <NA> <NA>\n")
             print()
             print(f"\t Speaker {speaker_labels[i]}: {round(global_start + segment.start,3)} - {round(global_start + segment.end,3)}", end="\t \t")
             print(f"\t Text: ", end="")
@@ -72,8 +64,5 @@ if __name__ == "__main__":
         if i < len(segments) - 1:
             for j in range(i + 1, len(segments)):
                 print(text["segments"][j%len(text["segments"])]["text"], end="")
-
-    
-    f.close()
 
     print()
