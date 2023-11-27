@@ -7,6 +7,31 @@ from transcription.whisper_transcriber import WhisperSpeechTranscriber
 from transcription.model_config import ModelSize
 import time
 
+import torch
+import torchaudio
+from denoiser import pretrained
+from denoiser.dsp import convert_audio
+import time
+import soundfile as sf
+
+class Denoiser():
+    def _init_(self, device = None, model = None):
+        self.model = pretrained.dns64().cpu()
+
+    def denoise(self, file, chunk_counter):
+    
+        start = time.time()
+        print("starting to denoise")
+    
+        wav, sr = torchaudio.load(file)
+        wav = convert_audio(wav.cuda(), sr, model.sample_rate, model.chin)
+
+        with torch.no_grad():
+            denoised = self.model(wav[None])[0]
+        print(f"it took {time.time() - start} seconds to get the output")
+
+        return denoised.cpu(), self.model.sample_rate  # Return the result on the CPU if necessary
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--audio-path", type=str, default="an4_diarize_test.wav")
@@ -24,6 +49,8 @@ if __name__ == "__main__":
     args = parse_args()
     audio_iterator = AudioIterator(args.audio_path, args.chunk_size)
 
+    denoise_model = pretrained.dns64().cuda()
+
     # initialize diarizer
     diarizer = PyannoteDiarizer(device=args.device,
                                 feature_clustering_threshold=args.feature_clustering_threshold,
@@ -39,6 +66,14 @@ if __name__ == "__main__":
         chunk, global_start, global_end = audio_iterator.next(simulate_real_time=True)
         if chunk is None:
             break
+        
+        wav = convert_audio(chunk.cuda(), 16000, denoise_model.sample_rate, denoise_model.chin)
+
+        with torch.no_grad():
+            chunk = denoise_model(wav[None])[0]
+
+        # chunk = chunk.cpu()
+
         speaker_labels, segments = diarizer.run(chunk)
 
         text=transcriber.get_transcription(chunk[0, :])
