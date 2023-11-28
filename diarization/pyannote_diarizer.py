@@ -1,8 +1,7 @@
-from typing import Any
 import numpy as np
 import torch
 from pyannote.audio import Pipeline
-from pyannote.audio.pipelines.speaker_verification import PretrainedSpeakerEmbedding
+from pyannote.audio.pipelines import VoiceActivityDetection
 from pyannote.core import Segment
 from pyannote.audio import Audio
 from sklearn.cluster import AgglomerativeClustering
@@ -25,14 +24,19 @@ class PyannoteDiarizer():
         :param feature_clustering_threshold: threshold for clustering the features
         :param ema_alpha: alpha for exponential moving average for the feature update
         """
-        self.diarization_pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization",
-                                                             use_auth_token="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")
-        
+        self.segmentation_model = Model.from_pretrained("pyannote/segmentation-3.0", 
+                              use_auth_token="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")
         
         self.embedding_model = Model.from_pretrained("pyannote/embedding", 
                                     use_auth_token="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")
         
+        self.segmentation_model.to(device)
+
         self.embedding_model.to(device)
+
+        self.vad = VoiceActivityDetection(segmentation=self.segmentation_model)
+
+        self.vad.instantiate({'min_duration_on': 0.5, 'min_duration_off': 0.0})   
         
         self.embedder = Inference(self.embedding_model, window="whole")
         
@@ -41,26 +45,12 @@ class PyannoteDiarizer():
         self.ema_alpha = ema_alpha
 
         self.audio = Audio(sample_rate=16000, mono="downmix")
-        
-        if from_previous_session:
-            self.diarization_pipeline.instantiate({'from': from_previous_session})
 
         self.features = {}
 
-        self.feature_labels = range(10000)
+        self.feature_labels = [chr(i) for i in range(ord('A'), ord('Z') + 1)]
 
         self.feature_clustering_threshold = feature_clustering_threshold
-
-    def __call__(self, kwargs: Any):
-        """
-        :param kwargs: dictionary with waveform and sample rate
-        :return: Annotation object with speaker labels and segments
-
-        Diarize the chunk and feature match the speakers with the previous chunks
-        Determine if the speaker was already seen or not in the previous chunks
-        """
-
-        return self.run(kwargs["waveform"])
 
     def run(self, chunk: np.ndarray):
         """
@@ -71,10 +61,11 @@ class PyannoteDiarizer():
         Determine if the speaker was already seen or not in the previous chunks
         """
 
-        diarization = self.get_diarization(chunk)
-        embeddings = self.get_embeddings(chunk, diarization)
-        segments = self.get_segments(diarization)
+        segments = self.get_segments(chunk)
+        embeddings = self.get_embeddings(chunk, segments)
         speaker_labels = self.cluster_embeddings(embeddings)
+
+        assert len(speaker_labels) == len(segments)
 
         return speaker_labels, segments
     
@@ -107,41 +98,20 @@ class PyannoteDiarizer():
 
         return speaker_labels
         
-    def get_diarization(self, chunk: np.ndarray):
+    def get_segments(self, chunk: np.ndarray):
         """
         :param chunk: audio chunk
         :return: diarization object
         """
-        diarization = self.diarization_pipeline({'waveform': chunk, 'sample_rate': 16000})
-        return diarization
-
-    def get_segments(self, diarization):
-        segments = []
-        for track in diarization.itertracks(yield_label=True):
-            if track[0].duration < 0.5:
-                continue
-            segments.append(track[0])
+        segments = self.vad({'waveform': chunk, 'sample_rate': 16000})
         return segments
     
     def segment_embedding(self, chunk: np.ndarray, segment: Segment):
         return [self.embedder({'waveform': chunk[:, int(segment.start * 16000):int(segment.end * 16000)], 'sample_rate': 16000})]
     
-    def get_embeddings(self, chunk: np.ndarray, diarization):
+    def get_embeddings(self, chunk: np.ndarray, segments):
         embeddings = []
-        speaker_labels = []
-        for track in diarization.itertracks(yield_label=True):
+        for track in segments.itertracks(yield_label=True):
             segment = track[0]
-            speaker = track[2]
-            if segment.duration < 0.5:
-                continue
             embeddings.append(self.segment_embedding(chunk, segment))
-            speaker_labels.append(speaker)
         return embeddings
-    
-    def get_speaker_embeddings(self, diarization):
-        embeddings = []
-        for track in diarization.itertracks(yield_label=True):
-            segment = track[0]
-            speaker = track[2]
-            embeddings.append((speaker, self.segment_embedding(segment)))
-        return np.nan_to_num(embeddings)
