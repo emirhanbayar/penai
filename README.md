@@ -28,4 +28,4 @@ The default values for the arguments are as follows:
 | chunk_size | 32000 |
 | feature_clustering_threshold | 0.8 |
 | from_previous_session | None |
-| device | gpu |
+| device | cuda |

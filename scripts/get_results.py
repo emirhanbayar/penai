@@ -119,9 +119,9 @@ def evaluate(hyps, refs, mid_refs=None):
         mid_purity = DiarizationPurity()
         mid_error_rate = DiarizationErrorRate()
         for i in range(num_results):
-            mid_coverage(mid_refs[i], hyps[i])
-            mid_purity(mid_refs[i], hyps[i])
-            mid_error_rate(mid_refs[i], hyps[i])
+            mid_coverage(refs[i], mid_refs[i])
+            mid_purity(refs[i], mid_refs[i])
+            mid_error_rate(refs[i], mid_refs[i])
         print(f"Mid Coverage: {mid_coverage.report()}")
         print(f"Mid Purity: {mid_purity.report()}")
         print(f"Mid Error rate: {mid_error_rate.report()}")
@@ -144,30 +144,30 @@ def visualize(hyps, refs, mid_refs=None, args=None):
         plt.subplot(311)
         plt.text(80, 0.8, title_1)
         notebook.reset()
-        # notebook.crop = crop
-        # notebook.start_time = seg_start
-        # notebook.duration = seg_end - seg_start
+        notebook.crop = crop
+        notebook.start_time = seg_start
+        notebook.duration = seg_end - seg_start
         notebook.plot_annotation(refs[i], legend=True)
         plt.subplot(312)
         plt.text(80, 0.8, title_2)
         notebook.reset()
-        # notebook.crop = crop
-        # notebook.start_time = seg_start
-        # notebook.duration = seg_end - seg_start
+        notebook.crop = crop
+        notebook.start_time = seg_start
+        notebook.duration = seg_end - seg_start
         notebook.plot_annotation(hyps[i], legend=True)
         if mid_refs is not None:
             plt.subplot(313)
             plt.text(80, 0.8, title_3)
             notebook.reset()
-            # notebook.crop = crop
-            # notebook.start_time = seg_start
-            # notebook.duration = seg_end - seg_start
+            notebook.crop = crop
+            notebook.start_time = seg_start
+            notebook.duration = seg_end - seg_start
             notebook.plot_annotation(mid_refs[i], legend=True)
 
         plt.tight_layout()
         
         os.makedirs(f"plots/{args.dataset_name}/{args.dataset_type}/{args.diarizer}_{args.chunk_size}_{args.feature_clustering_threshold}", exist_ok=True)
-        plt.savefig(f"plots/{args.dataset_name}/{args.dataset_type}/{args.diarizer}_{args.chunk_size}_{args.feature_clustering_threshold}/global_{i}.png")
+        plt.savefig(f"plots/{args.dataset_name}/{args.dataset_type}/{args.diarizer}_{args.chunk_size}_{args.feature_clustering_threshold}/{i}.png")
 
 def main():
     args = parse_args()
@@ -207,7 +207,7 @@ def main():
             result.write_rttm(f)
 
     hyps, refs = load_rttms(args)
-    mid_refs, _ = load_rttms(args, "pyannote-vanilla")
+    mid_refs, _ = load_rttms(args, "pyannote-vanilla_64000_0.8")
     
     evaluate(hyps, refs, mid_refs)
 

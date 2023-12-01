@@ -38,7 +38,8 @@ def parse_args():
     parser.add_argument("--chunk-size", type=int, default=32000)
     parser.add_argument("--feature-clustering-threshold", type=float, default=0.8)
     parser.add_argument("--from-previous-session", type=str, default=None)
-    parser.add_argument("--device", type=str, default="gpu")
+    parser.add_argument("--device", type=str, default="cuda")
+    parser.add_argument("--max-num-speakers", type=int, default=7)
 
 
     return parser.parse_args()
@@ -54,7 +55,8 @@ if __name__ == "__main__":
     # initialize diarizer
     diarizer = PyannoteDiarizer(device=args.device,
                                 feature_clustering_threshold=args.feature_clustering_threshold,
-                                from_previous_session=args.from_previous_session)
+                                from_previous_session=args.from_previous_session,
+                                max_num_speakers=args.max_num_speakers)
 
 
     # initialize speech transcriber

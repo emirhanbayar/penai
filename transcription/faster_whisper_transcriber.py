@@ -1,5 +1,5 @@
 import numpy as np
-
+import torch.cuda
 
 from transcription.model_config import ModelSize, DEVICE, COMPUTATION_TYPE
 from transcription.model_cache import ModelCache
@@ -13,11 +13,14 @@ class FasterWhisperSpeechTranscriber:
     def __init__(
         self,
         model_size: ModelSize,
-        language_code=None,
         device="cpu",
+        language_code=None,
         compute_type="float32",
         beam_size=1,
     ):
+        if(torch.cuda.is_available()):
+            device = "cuda"
+            compute_type=COMPUTATION_TYPE
         self.language = language_code
         self.model = self.initialize_model(model_size, device, compute_type)
         self._buffer = ""
