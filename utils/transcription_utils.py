@@ -36,6 +36,7 @@ def jsonify_segment(segment):
         "compression_ratio": segment.compression_ratio,
         "no_speech_prob": segment.no_speech_prob,
         "id": segment.id,
+        "words": [jsonify_word(word) for word in segment.words],
     }
 
 
@@ -45,5 +46,10 @@ def format_transcription(segments, info):
     """
     language = info.language
     text = concatenate_segments(segments)
+    try:
+        words = [jsonify_word(word) for segment in segments for word in segment.words]
+    except:
+        words = []
     segments = [jsonify_segment(segment) for segment in segments]
-    return {"language": language, "text": text, "segments": segments}
+
+    return {"language": language, "text": text, "segments": segments, "words": words}
