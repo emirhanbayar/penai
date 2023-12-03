@@ -66,7 +66,7 @@ if __name__ == "__main__":
     )
 
     # initialize speech transcriber
-    transcriber = WhisperSpeechTranscriber(ModelSize.LARGE_V1)
+    transcriber = WhisperSpeechTranscriber(ModelSize.TINY)
     # iterate over audio
     start_time = time.time()
     start_time = time.time()
@@ -120,6 +120,9 @@ if __name__ == "__main__":
             except:
                 print("")
         # print remaining time segments
-        print(speaker_text,end="")
+        try:
+            print(speaker_text,end="")
+        except:
+            pass
 
     print()

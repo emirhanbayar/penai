@@ -18,7 +18,7 @@ class PyannoteDiarizer():
     TODO: The feature extraction is already done in the diarization pipeline, so we should use that instead of
     extracting the features again
     """
-    def __init__(self, device="cpu", feature_clustering_threshold = 0.9, ema_alpha = 0.8, from_previous_session=None, max_num_speakers=7):
+    def __init__(self, device="cpu", feature_clustering_threshold = 0.7, ema_alpha = 0.8, from_previous_session=None, max_num_speakers=7):
         """
         :param device: device to run the model on
         :param feature_clustering_threshold: threshold for clustering the features
@@ -27,6 +27,7 @@ class PyannoteDiarizer():
         self.diarization_pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization",
                                                              use_auth_token="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")
         
+        self.diarization_pipeline.to(self.device)
         
         self.embedding_model = Model.from_pretrained("pyannote/embedding", 
                                     use_auth_token="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")

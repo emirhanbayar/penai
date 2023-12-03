@@ -137,7 +137,7 @@ def visualize(hyps, refs, mid_refs=None, args=None):
     print(f"Visualizing {num_results} files")
     for i in range(num_results):
         seg_start = 0
-        seg_end = 100
+        seg_end = 1000
         crop = Segment(seg_start, seg_end)
         # full screen
         plt.figure(figsize=(20, 10))

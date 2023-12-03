@@ -44,7 +44,6 @@ class AudioIterator():
             batch_start = self.batch_pointer * self.chunk_size
             batch_end = min(self.audio_length, batch_start + self.chunk_size)
             batch = self.audio[:, batch_start:batch_end]
-            print(type(batch))
             self.batch_pointer += 1
             return batch, batch_start / float(self.sr), batch_end / float(self.sr)
         else:
