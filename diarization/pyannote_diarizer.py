@@ -27,7 +27,7 @@ class PyannoteDiarizer():
         self.diarization_pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization",
                                                              use_auth_token="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")
         
-        self.diarization_pipeline.to(self.device)
+        self.diarization_pipeline.to(torch.device(device))
         
         self.embedding_model = Model.from_pretrained("pyannote/embedding", 
                                     use_auth_token="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")

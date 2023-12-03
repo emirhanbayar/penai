@@ -58,7 +58,7 @@ if __name__ == "__main__":
 
 
     # initialize speech transcriber
-    transcriber=WhisperSpeechTranscriber(ModelSize.TINY)
+    transcriber=WhisperSpeechTranscriber(ModelSize.LARGE_V2)
     # iterate over audio
     start_time = time.time()
     start_time = time.time()
