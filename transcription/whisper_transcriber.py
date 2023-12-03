@@ -25,10 +25,7 @@ class WhisperSpeechTranscriber:
 
 
     def get_transcription(self, audio: np.ndarray):
-
-
-        segments = self.model.transcribe(
-            audio
-        )
+        segments = self.model.transcribe(audio, word_timestamps=True)
         self.counter += 1
-        return segments
+        words = [word for segment in segments["segments"] for word in segment["words"]]
+        return segments, words
