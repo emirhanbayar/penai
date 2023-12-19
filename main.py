@@ -58,13 +58,6 @@ if __name__ == "__main__":
                                 from_previous_session=args.from_previous_session,
                                 max_num_speakers=args.max_num_speakers)
 
-    # initialize diarizer
-    diarizer = PyannoteDiarizer(
-        device=args.device,
-        feature_clustering_threshold=args.feature_clustering_threshold,
-        from_previous_session=args.from_previous_session,
-    )
-
     # initialize speech transcriber
     transcriber = WhisperSpeechTranscriber(ModelSize.LARGE_V2)
     # iterate over audio

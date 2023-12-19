@@ -5,12 +5,7 @@ from pyannote.audio import Pipeline
 from pyannote.audio.pipelines.speaker_verification import PretrainedSpeakerEmbedding
 from pyannote.core import Segment
 from pyannote.audio import Audio
-from pyannote.audio import Model
-from pyannote.audio import Inference
 from scipy.spatial.distance import cdist
-
-
-from utils.audio_utils import np_to_wav
 
 class PyannoteDiarizer():
     """
@@ -18,24 +13,23 @@ class PyannoteDiarizer():
     TODO: The feature extraction is already done in the diarization pipeline, so we should use that instead of
     extracting the features again
     """
-    def __init__(self, device="cpu", feature_clustering_threshold = 0.7, ema_alpha = 0.8, from_previous_session=None, max_num_speakers=7):
+    def __init__(self, feature_clustering_threshold = 0.6, ema_alpha = 0.8, from_previous_session=None, max_num_speakers=7):
         """
         :param device: device to run the model on
         :param feature_clustering_threshold: threshold for clustering the features
         :param ema_alpha: alpha for exponential moving average for the feature update
         """
+
+        self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+
         self.diarization_pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization",
                                                              use_auth_token="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")
         
-        self.diarization_pipeline.to(torch.device(device))
+        self.diarization_pipeline.to(self.device)
         
-        self.embedding_model = Model.from_pretrained("pyannote/embedding", 
-                                    use_auth_token="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")
-        
-        self.embedding_model.to(device)
-        
-        self.embedder = Inference(self.embedding_model, window="whole")
-        
+        self.embedder = PretrainedSpeakerEmbedding("nvidia/speakerverification_en_titanet_large",
+                                                   device=self.device)
+
         self.num_speakers = 0
 
         self.max_num_speakers = max_num_speakers
@@ -89,9 +83,14 @@ class PyannoteDiarizer():
         assigning them to the closest cluster, or creating a new one if the distance is too large
         The comparison is done using cosine distance
         """
-        
         speaker_labels = []
+        prev_embedding = None
         for i, embedding in enumerate(embeddings):
+            if prev_embedding is not None and cdist(embedding, prev_embedding, metric="cosine")[0, 0] < self.feature_clustering_threshold:
+                speaker_labels.append(speaker_labels[i - 1])
+                self.features[speaker_labels[i - 1]] = [self.ema_alpha * self.features[speaker_labels[i - 1]][0] + (1 - self.ema_alpha) * embedding[0]]
+                continue
+            prev_embedding = embedding
             min_distance = np.inf
             distance = np.inf
             for key, previous_embedding in self.features.items():
@@ -99,13 +98,15 @@ class PyannoteDiarizer():
                 if distance < min_distance:
                     min_distance = distance
                     candidate = key
-            # print("\n \t min distance: ", min_distance)
+            # print("\n \t min distance: ", round(min_distance, 2), end="\t \t")
             if min_distance < self.feature_clustering_threshold or self.num_speakers >= self.max_num_speakers:
                 speaker_labels.append(candidate)
                 # print(type(self.features[candidate]), end=" ")
                 # print(len(self.features[candidate]))
                 # print(type(embedding), end=" ")
                 # print(len(embedding))
+                # calculated_ema_alpha = self.ema_alpha + (((1 - self.ema_alpha) / self.feature_clustering_threshold) * min_distance)
+                # print(round(calculated_ema_alpha, 2), end="\t \t")
                 self.features[candidate] = [self.ema_alpha * self.features[candidate][0] + (1 - self.ema_alpha) * embedding[0]]
             else:
                 self.features[self.feature_labels[self.num_speakers]] = embedding
@@ -113,6 +114,7 @@ class PyannoteDiarizer():
                 self.num_speakers += 1
 
         return speaker_labels
+
         
     def get_diarization(self, chunk: np.ndarray):
         """
@@ -131,7 +133,7 @@ class PyannoteDiarizer():
         return segments
     
     def segment_embedding(self, chunk: np.ndarray, segment: Segment):
-        return [self.embedder({'waveform': chunk[:, int(segment.start * 16000):int(segment.end * 16000)], 'sample_rate': 16000})]
+        return self.embedder(chunk[:, int(segment.start * 16000):int(segment.end * 16000)].unsqueeze(1))
     
     def get_embeddings(self, chunk: np.ndarray, diarization):
         embeddings = []
