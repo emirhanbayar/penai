@@ -53,8 +53,7 @@ if __name__ == "__main__":
     denoise_model = pretrained.dns64().cuda()
 
     # initialize diarizer
-    diarizer = PyannoteDiarizer(device=args.device,
-                                feature_clustering_threshold=args.feature_clustering_threshold,
+    diarizer = PyannoteDiarizer(feature_clustering_threshold=args.feature_clustering_threshold,
                                 from_previous_session=args.from_previous_session,
                                 max_num_speakers=args.max_num_speakers)
 
