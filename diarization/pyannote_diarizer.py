@@ -8,7 +8,7 @@ from pyannote.audio import Audio
 from scipy.spatial.distance import cdist
 
 class PyannoteDiarizer():
-    def __init__(self, feature_clustering_threshold = 0.48, ema_alpha = 0.8, from_previous_session=None, max_num_speakers=7):
+    def __init__(self, feature_clustering_threshold = 0.48, ema_alpha = 0.8, from_previous_session=None, max_num_speakers=10000):
         """
         :param device: device to run the model on
         :param feature_clustering_threshold: threshold for clustering the features
@@ -79,16 +79,13 @@ class PyannoteDiarizer():
         The comparison is done using cosine distance
         """
         speaker_labels = []
-        prev_embeddings = []
+        prev_embedding = None
         for i, embedding in enumerate(embeddings):
-            if len(prev_embeddings) > 0:
-                distance = cdist(embedding, prev_embeddings, metric="cosine")
-                if np.min(distance) < self.feature_clustering_threshold:
-                    speaker_labels.append(speaker_labels[np.argmin(distance)])
-                    self.features[speaker_labels[np.argmin(distance)]] = [self.ema_alpha * self.features[speaker_labels[np.argmin(distance)]][0] + (1 - self.ema_alpha) * embedding[0]]
-                    continue
-
-            prev_embeddings.append(embedding)
+            if prev_embedding is not None and cdist(embedding, prev_embedding, metric="cosine")[0, 0] < self.feature_clustering_threshold:
+                speaker_labels.append(speaker_labels[i - 1])
+                self.features[speaker_labels[i - 1]] = [self.ema_alpha * self.features[speaker_labels[i - 1]][0] + (1 - self.ema_alpha) * embedding[0]]
+                continue
+            prev_embedding = embedding
             min_distance = np.inf
             distance = np.inf
             for key, previous_embedding in self.features.items():
