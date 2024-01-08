@@ -133,11 +133,14 @@ def visualize(hyps, refs, mid_refs=None, args=None):
             title_1 = f"{args.dataset_name} {args.dataset_type} Reference"
             title_2 = f"{args.diarizer} {args.chunk_size} {args.feature_clustering_threshold}"
             title_3 = f"pyannote-vanilla"
+        else: 
+            title_1 = f"{args.dataset_name} {args.dataset_type} Reference"
+            title_2 = f"{args.diarizer} {args.chunk_size} {args.feature_clustering_threshold}"
     num_results = min(len(hyps), len(refs))
     print(f"Visualizing {num_results} files")
     for i in range(num_results):
         seg_start = 0
-        seg_end = 100
+        seg_end = 1000
         crop = Segment(seg_start, seg_end)
         # full screen
         plt.figure(figsize=(20, 10))
@@ -207,7 +210,7 @@ def main():
             result.write_rttm(f)
 
     hyps, refs = load_rttms(args)
-    mid_refs, _ = load_rttms(args, "pyannote-vanilla")
+    mid_refs = None
     
     evaluate(hyps, refs, mid_refs)
 
