@@ -202,10 +202,11 @@ def main():
                 chunk, global_start, global_end = audio_iterator.next(simulate_real_time=True)
                 if chunk is None:
                     break
-                try:
-                    speaker_labels, segments = diarizer({'waveform': chunk, 'sample_rate': 16000})
-                except:
-                    print(f"Could not diarize chunk: {global_start} - {global_end}")
+                # try:
+                #     speaker_labels, segments = diarizer({'waveform': chunk, 'sample_rate': 16000})
+                # except:
+                #     print(f"Could not diarize chunk: {global_start} - {global_end}")
+                speaker_labels, segments = diarizer({'waveform': chunk, 'sample_rate': 16000})
                 for i, segment in enumerate(segments):
                     result[Segment(start=global_start + segment.start, end=global_start + segment.end)] = speaker_labels[i]
             result.write_rttm(f)
