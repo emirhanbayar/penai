@@ -79,21 +79,25 @@ class PyannoteDiarizer():
         The comparison is done using cosine distance
         """
         speaker_labels = []
-        candidate = None
+        prev_embeddings = []
         for i, embedding in enumerate(embeddings):
+            if len(prev_embeddings) > 0:
+                distance = cdist(embedding, prev_embeddings, metric="cosine")
+                if np.min(distance) < self.feature_clustering_threshold:
+                    speaker_labels.append(speaker_labels[np.argmin(distance)])
+                    self.features[speaker_labels[np.argmin(distance)]] = [self.ema_alpha * self.features[speaker_labels[np.argmin(distance)]][0] + (1 - self.ema_alpha) * embedding[0]]
+                    continue
+
+            prev_embeddings.append(embedding)
             min_distance = np.inf
             distance = np.inf
-            possible_candidates = list(self.features.items()) + embeddings[:i] + embeddings[i+1:]
-            for key, previous_embedding in possible_candidates:
+            for key, previous_embedding in self.features.items():
                 distance = cdist(embedding, previous_embedding, metric="cosine")[0, 0]
                 if distance < min_distance:
                     min_distance = distance
                     candidate = key
             print("\n \t min distance: ", round(min_distance, 2), end="\t \t")
-
-            if candidate != None and candidate not in self.features:
-                continue
-            elif min_distance < self.feature_clustering_threshold:
+            if min_distance < self.feature_clustering_threshold or self.num_speakers >= self.max_num_speakers:
                 speaker_labels.append(candidate)
                 # print(type(self.features[candidate]), end=" ")
                 # print(len(self.features[candidate]))
