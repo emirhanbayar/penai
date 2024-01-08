@@ -93,7 +93,7 @@ class PyannoteDiarizer():
                 if distance < min_distance:
                     min_distance = distance
                     candidate = key
-            print("\n \t min distance: ", round(min_distance, 2), end="\t \t")
+            # print("\n \t min distance: ", round(min_distance, 2), end="\t \t")
             if min_distance < self.feature_clustering_threshold or self.num_speakers >= self.max_num_speakers:
                 speaker_labels.append(candidate)
                 # print(type(self.features[candidate]), end=" ")
