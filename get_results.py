@@ -20,7 +20,7 @@ def parse_args():
     parser.add_argument("--dataset-path", type=str, default="data", help="Path to store dataset")
     parser.add_argument("--diarizer", type=str, default="pyannote-ours", help="Diarization model")
     parser.add_argument("--output-path", type=str, default="output", help="Path to store dataset")
-    parser.add_argument("--feature-clustering-threshold", type=float, default=0.8, help="Threshold for clustering features")
+    parser.add_argument("--feature-clustering-threshold", type=float, default=0.6, help="Threshold for clustering features")
     parser.add_argument("--ema-alpha", type=float, default=0.90, help="Feature update")
     parser.add_argument("--chunk-size", type=int, default=64000, help="Chunk size for diarization")
     parser.add_argument("--generate-rttm", action="store_true", help="Generate rttm files")
@@ -74,6 +74,7 @@ def load_rttms(args, desired_name=None):
     if desired_name is None:
         desired_name = f"{args.diarizer}_{args.chunk_size}_{args.feature_clustering_threshold}"
 
+    print(f"{args.output_path}/{args.dataset_name}/{args.dataset_type}/{desired_name}")
     for root, _, files in os.walk(f"{args.output_path}/{args.dataset_name}/{args.dataset_type}/{desired_name}"):
         for file in files:
             if file.endswith(".rttm"):

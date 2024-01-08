@@ -13,7 +13,7 @@ class PyannoteDiarizer():
     TODO: The feature extraction is already done in the diarization pipeline, so we should use that instead of
     extracting the features again
     """
-    def __init__(self, feature_clustering_threshold = 0.6, ema_alpha = 0.8, max_num_speakers=7):
+    def __init__(self, feature_clustering_threshold = 0.6, ema_alpha = 0.8, max_num_speakers=1000):
         """
         :param device: device to run the model on
         :param feature_clustering_threshold: threshold for clustering the features
